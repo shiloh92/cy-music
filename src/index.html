@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cymatic Audio Visualizer & Pattern Generator</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Main Visualization Canvas -->
+        <div id="visualization-container">
+            <canvas id="cymatic-canvas"></canvas>
+            
+            <!-- Vertex Selection Display -->
+            <div id="vertex-selection-display">
+                <div id="selected-vertex-info">
+                    <span id="vertex-id">No vertex selected</span>
+                </div>
+            </div>
+            
+            <!-- Keyboard Controls Legend -->
+            <div id="keyboard-controls">
+                <div class="controls-legend">
+                    <div class="legend-title">Vertex Movement</div>
+                    <div class="legend-grid">
+                        <div class="legend-item">
+                            <span class="key">W</span>
+                            <span class="direction">Up</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="key">S</span>
+                            <span class="direction">Down</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="key">A</span>
+                            <span class="direction">Left</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="key">D</span>
+                            <span class="direction">Right</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Layer Isolation Button -->
+            <div id="layer-isolation-button" class="hidden">
+                <button id="isolate-layer" class="btn btn-isolation">
+                    <span class="icon">👁️</span>
+                    <span class="text">Isolate</span>
+                </button>
+                <button id="show-all-layers" class="btn btn-isolation hidden">
+                    <span class="icon">👁️</span>
+                    <span class="text">All</span>
+                </button>
+            </div>
+            
+            <!-- Overlay Controls -->
+            <div id="overlay-controls">
+                <div class="control-panel">
+                    <h3>Audio Controls</h3>
+                    <div class="control-group">
+                        <button id="playPause" class="btn btn-primary">Play</button>
+                        <button id="reset" class="btn btn-secondary">Reset</button>
+                        <button id="recordButton" class="btn btn-record">Record</button>
+                    </div>
+                    <div id="recording-status" class="recording-status hidden">
+                        <div class="recording-indicator">
+                            <span class="recording-dot"></span>
+                            <span class="recording-duration">00:00</span>
+                        </div>
+                    </div>
+                    <div class="volume-controls">
+                        <label>Master Volume</label>
+                        <input type="range" id="masterVolume" min="0" max="1" step="0.1" value="0.7">
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <h3>Visualization</h3>
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="showWireframe" checked> Wireframe
+                        </label>
+                        <label>
+                            <input type="checkbox" id="showVertices" checked> Vertices
+                        </label>
+                        <label>
+                            <input type="checkbox" id="liveVertexUpdates" checked> Live Audio Updates
+                        </label>
+                        <label>
+                            <input type="checkbox" id="groupPullMode"> Group Pull Mode
+                        </label>
+                    </div>
+                    <div class="control-group">
+                        <label>Animation Speed</label>
+                        <input type="range" id="animationSpeed" min="0.1" max="2" step="0.1" value="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pattern Generator Panel -->
+        <div id="pattern-panel">
+            <div class="panel-header">
+                <h2>Pattern Generator</h2>
+                <button id="togglePanel" class="btn btn-icon">×</button>
+            </div>
+            
+            <div class="pattern-tabs">
+                <button class="tab-btn active" data-track="drums">Drums</button>
+                <button class="tab-btn" data-track="bassline">Bassline</button>
+                <button class="tab-btn" data-track="synth">Synth</button>
+                <button class="tab-btn" data-track="hihat">Hi-Hat</button>
+            </div>
+            
+            <!-- Audio File Selection for each track -->
+            <div class="track-audio-section">
+                <div class="file-input-group">
+                    <label for="synth-file">Audio File:</label>
+                    <input type="file" id="synth-file" accept=".wav,.mp3,.flac,audio/*" class="audio-file-input">
+                    <span class="file-status" id="synth-status">Default</span>
+                </div>
+                <div class="file-input-group">
+                    <label for="bassline-file">Audio File:</label>
+                    <input type="file" id="bassline-file" accept=".wav,.mp3,.flac,audio/*" class="audio-file-input">
+                    <span class="file-status" id="bassline-status">Default</span>
+                </div>
+                <div class="file-input-group">
+                    <label for="drums-file">Audio File:</label>
+                    <input type="file" id="drums-file" accept=".wav,.mp3,.flac,audio/*" class="audio-file-input">
+                    <span class="file-status" id="drums-status">Default</span>
+                </div>
+                <div class="file-input-group">
+                    <label for="hihat-file">Audio File:</label>
+                    <input type="file" id="hihat-file" accept=".wav,.mp3,.flac,audio/*" class="audio-file-input">
+                    <span class="file-status" id="hihat-status">Default</span>
+                </div>
+                <div class="supported-formats">
+                    <small>Supported formats: WAV, MP3, FLAC</small>
+                </div>
+            </div>
+            
+            <!-- Note Selector -->
+            <div class="note-selector">
+                <div class="note-selector-header">
+                    <span>Note: <span id="current-note">C4</span></span>
+                    <button id="note-picker-toggle" class="btn btn-icon">🎵</button>
+                </div>
+                <div id="note-picker" class="note-picker hidden">
+                    <div class="note-row">
+                        <button class="note-btn" data-note="C">C</button>
+                        <button class="note-btn" data-note="C#">C#</button>
+                        <button class="note-btn" data-note="D">D</button>
+                        <button class="note-btn" data-note="D#">D#</button>
+                        <button class="note-btn" data-note="E">E</button>
+                        <button class="note-btn" data-note="F">F</button>
+                        <button class="note-btn" data-note="F#">F#</button>
+                        <button class="note-btn" data-note="G">G</button>
+                        <button class="note-btn" data-note="G#">G#</button>
+                        <button class="note-btn" data-note="A">A</button>
+                        <button class="note-btn" data-note="A#">A#</button>
+                        <button class="note-btn" data-note="B">B</button>
+                    </div>
+                    <div class="octave-row">
+                        <button class="octave-btn" data-octave="2">2</button>
+                        <button class="octave-btn" data-octave="3">3</button>
+                        <button class="octave-btn active" data-octave="4">4</button>
+                        <button class="octave-btn" data-octave="5">5</button>
+                        <button class="octave-btn" data-octave="6">6</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pattern-grid-container">
+                <div class="pattern-info">
+                    <span>BPM: <span id="bpm-display">120</span></span>
+                    <input type="range" id="bpm-slider" min="60" max="200" value="120">
+                </div>
+                
+                <!-- Drawing Mode Controls -->
+                <div class="draw-mode-controls">
+                    <span>Draw Mode:</span>
+                    <div class="draw-mode-buttons">
+                        <button class="draw-mode-btn active" data-mode="toggle">Toggle</button>
+                        <button class="draw-mode-btn" data-mode="add">Add</button>
+                        <button class="draw-mode-btn" data-mode="remove">Remove</button>
+                    </div>
+                </div>
+                
+                <div class="pattern-grid" id="pattern-grid">
+                    <!-- Grid will be generated by JavaScript -->
+                </div>
+                <div class="pattern-controls">
+                    <button id="clear-pattern" class="btn btn-secondary">Clear</button>
+                    <button id="random-pattern" class="btn btn-secondary">Random</button>
+                    <button id="save-pattern" class="btn btn-primary">Save</button>
+                    <button id="export-wav" class="btn btn-primary">Export Audio</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vertex Interaction Hints -->
+        <div id="interaction-hints">
+            <div class="hint">
+                <span class="hint-icon">🖱️</span>
+                <span>Click vertices to select, use WASD to move</span>
+            </div>
+            <div class="hint">
+                <span class="hint-icon">🌊</span>
+                <span>Enable Group Pull Mode for ripple effects on nearby vertices</span>
+            </div>
+            <div class="hint">
+                <span class="hint-icon">🎵</span>
+                <span>Vertex displacement affects audio parameters</span>
+            </div>
+            <div class="hint">
+                <span class="hint-icon">🔴</span>
+                <span>Press R or click Record to capture live performance (saves JSON + WAV)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html> 
